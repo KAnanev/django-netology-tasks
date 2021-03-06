@@ -2,16 +2,22 @@ from collections import Counter
 
 from django.shortcuts import render
 
+from django.http import HttpResponseNotFound
+
 # Для отладки механизма ab-тестирования используйте эти счетчики
 # в качестве хранилища количества показов и количества переходов.
 # но помните, что в реальных проектах так не стоит делать
-# так как при перезапуске приложения они обнулятся
+# так как при перезапуске приложения они обнуляться
 counter_show = Counter()
 counter_click = Counter()
+reference_point = 1
 
 
 def index(request):
-    # Реализуйте логику подсчета количества переходов с лендига по GET параметру from-landing
+    # Реализуйте логику подсчета количества переходов с лендинга по GET параметру from-landing
+
+    link = request.GET.get('from-landing')
+    counter_click.update({link: reference_point})
     return render(request, 'index.html')
 
 
@@ -20,13 +26,33 @@ def landing(request):
     # в зависимости от GET параметра ab-test-arg
     # который может принимать значения original и test
     # Так же реализуйте логику подсчета количества показов
-    return render(request, 'landing.html')
+    # return render(request, 'landing.html')
+
+    link = request.GET.get('ab-test-arg')
+    counter_show.update(({link: reference_point}))
+    if link == 'original':
+        return render(request, 'landing.html')
+    elif link == 'test':
+        return render(request, 'landing_alternate.html')
+    else:
+        return HttpResponseNotFound('<h1>Page not found</h1>')
 
 
 def stats(request):
     # Реализуйте логику подсчета отношения количества переходов к количеству показов страницы
     # Для вывода результат передайте в следующем формате:
-    return render(request, 'stats.html', context={
-        'test_conversion': 0.5,
-        'original_conversion': 0.4,
-    })
+
+    if counter_show['test'] == 0 or counter_show['original'] == 0:
+        context = {
+            'test_conversion': 0,
+            'original_conversion': 0,
+        }
+    else:
+        test_conversion = counter_click['test'] / counter_show['test']
+        original_conversion = counter_click['original'] / counter_show['original']
+        context = {
+            'test_conversion': '{:.1f}'.format(test_conversion),
+            'original_conversion': '{:.1f}'.format(original_conversion),
+        }
+
+    return render(request, 'stats.html', context=context)
