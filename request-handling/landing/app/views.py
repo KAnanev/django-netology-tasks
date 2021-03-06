@@ -29,7 +29,7 @@ def landing(request):
     # return render(request, 'landing.html')
 
     link = request.GET.get('ab-test-arg')
-    counter_show.update(({link: reference_point}))
+    counter_show.update({link: reference_point})
     if link == 'original':
         return render(request, 'landing.html')
     elif link == 'test':
@@ -42,17 +42,15 @@ def stats(request):
     # Реализуйте логику подсчета отношения количества переходов к количеству показов страницы
     # Для вывода результат передайте в следующем формате:
 
-    if counter_show['test'] == 0 or counter_show['original'] == 0:
-        context = {
-            'test_conversion': 0,
-            'original_conversion': 0,
-        }
-    else:
-        test_conversion = counter_click['test'] / counter_show['test']
-        original_conversion = counter_click['original'] / counter_show['original']
-        context = {
-            'test_conversion': '{:.1f}'.format(test_conversion),
-            'original_conversion': '{:.1f}'.format(original_conversion),
-        }
+    def show(value):
+        result = counter_show[value]
+        return 1 if result == 0 else result
+
+    test_conversion = counter_click['test'] / show('test')
+    original_conversion = counter_click['original'] / show('original')
+    context = {
+        'test_conversion': '{:.1f}'.format(test_conversion),
+        'original_conversion': '{:.1f}'.format(original_conversion),
+    }
 
     return render(request, 'stats.html', context=context)
