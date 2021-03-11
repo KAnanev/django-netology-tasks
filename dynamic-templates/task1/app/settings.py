@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
     'app'
 ]
 
@@ -105,6 +106,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 
 STATIC_URL = '/static/'
+
+FILE_INFLATION_CSV = os.path.join(BASE_DIR, 'inflation_russia.csv')
 
 SECRET_KEY = 'put your secret here'
 DEBUG = True
