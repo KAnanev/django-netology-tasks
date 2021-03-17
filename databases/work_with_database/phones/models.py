@@ -9,3 +9,4 @@ class Phone(models.Model):
     price = models.IntegerField(null=True)
     release_date = models.DateField(null=True)
     lte_exists = models.BooleanField(null=True)
+    slug = models.CharField(max_length=100)
