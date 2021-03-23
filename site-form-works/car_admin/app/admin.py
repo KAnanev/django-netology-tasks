@@ -8,7 +8,7 @@ class CarAdmin(admin.ModelAdmin):
     car = ('brand', 'model', )
     list_display = car + ('review_count', )
     list_filter = search_fields = car
-    ordering = ('-id', )
+    ordering = ('pk', )
 
 
 class ReviewAdmin(admin.ModelAdmin):
