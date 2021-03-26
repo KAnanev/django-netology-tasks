@@ -1,33 +1,43 @@
-from django.shortcuts import redirect, render, get_object_or_404
+from django.shortcuts import redirect
 from django.urls import reverse
 
 from .models import Product, Review
 from .forms import ReviewForm
 
-
-def product_list_view(request):
-    template = 'app/product_list.html'
-    products = Product.objects.all()
-
-    context = {
-        'product_list': products,
-    }
-
-    return render(request, template, context)
+from django.views.generic import ListView, DetailView
 
 
-def product_view(request, pk):
-    template = 'app/product_detail.html'
-    product = get_object_or_404(Product, id=pk)
+class ProductListView(ListView):
+    model = Product
+    context_object_name = 'product_list'
 
-    form = ReviewForm
-    if request.method == 'POST':
-        # логика для добавления отзыва
-        pass
 
-    context = {
-        'form': form,
-        'product': product
-    }
+class ProductView(DetailView):
+    model = Product
+    form_class = ReviewForm
 
-    return render(request, template, context)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        context['form'] = self.form_class()
+        context['reviews'] = Review.objects.filter(product=self.object)
+
+        if self.object.id in self.request.session.get('reviewed_products', []):
+            context['is_review_exist'] = True
+
+        return context
+
+    def post(self, request, *args, **kwargs):
+        form = self.form_class(request.POST)
+        product_id = self.kwargs['pk']
+
+        if form.is_valid():
+            review = form.save(commit=False)
+            review.product_id = product_id
+            review.save()
+
+            reviewed_products = self.request.session.get('reviewed_products', [])
+            reviewed_products.append(product_id)
+            self.request.session['reviewed_products'] = reviewed_products
+
+        return redirect(reverse('product_detail', kwargs=self.kwargs))
